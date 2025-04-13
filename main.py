@@ -9,7 +9,7 @@ import requests
 # === Flask server ===
 app = Flask(__name__)
 
-CRONITOR_URL = "https://cronitor.link/YOUR-CRONITOR-ID"  # optional
+CRONITOR_URL = os.getenv("CRONITOR_URL")
 
 @app.route('/')
 def home():
