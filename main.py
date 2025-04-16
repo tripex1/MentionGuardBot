@@ -4,24 +4,16 @@ import discord
 from discord.ext import commands
 from datetime import timedelta
 from threading import Thread
-import requests
 
 # === Flask server ===
 app = Flask(__name__)
 
-CRONITOR_URL = os.getenv("CRONITOR_URL")
-
 @app.route('/')
 def home():
-    try:
-        requests.get(CRONITOR_URL)
-        print("✅ Cronitor heartbeat sent.")
-    except Exception as e:
-        print(f"❌ Cronitor ping failed: {e}")
     return "MentionGuardBot is running!"
 
 def start_server():
-    port = int(os.environ.get("PORT", 3000))  # Render will provide PORT
+    port = int(os.environ.get("PORT", 3000))  # Railway provides PORT
     print(f"🚀 Starting Flask server on port {port}")
     app.run(host='0.0.0.0', port=port)
 
