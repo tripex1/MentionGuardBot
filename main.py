@@ -1,4 +1,5 @@
 from flask import Flask
+import asyncio  # Add this at the top with your imports
 import os
 import discord
 from discord.ext import commands
@@ -78,14 +79,15 @@ async def on_message(message):
 
 @bot.event
 async def on_guild_channel_create(channel):
-    # Check if it's a ticket channel under the "tickets" category
     if isinstance(channel, discord.TextChannel):
         if channel.category and channel.category.name.lower() == "tickets":
             try:
-                await channel.send("Hi! Please tell us your problem here. Tripex will reply if he isn't sleeping")
+                await asyncio.sleep(2)  # Give the channel time to be fully initialized
+                await channel.send("Hello! Please tell us your problem here. Tripex will reply as soon as he can.")
                 print(f"📩 Sent ticket greeting in {channel.name}")
             except Exception as e:
                 print(f"❌ Failed to send ticket greeting: {e}")
+
 
 # === Start ===
 keep_alive()
