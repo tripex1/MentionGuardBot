@@ -80,13 +80,20 @@ async def on_message(message):
 @bot.event
 async def on_guild_channel_create(channel):
     if isinstance(channel, discord.TextChannel):
+        print(f"🆕 New channel created: {channel.name}")
+        if channel.category:
+            print(f"📁 Category name: {channel.category.name}, ID: {channel.category.id}")
+        else:
+            print("⚠️ Channel has no category!")
+
         if channel.category and channel.category.name.lower() == "tickets":
             try:
-                await asyncio.sleep(2)  # Give the channel time to be fully initialized
+                await asyncio.sleep(2)
                 await channel.send("Hello! Please tell us your problem here. Tripex will reply as soon as he can.")
                 print(f"📩 Sent ticket greeting in {channel.name}")
             except Exception as e:
                 print(f"❌ Failed to send ticket greeting: {e}")
+
 
 
 # === Start ===
