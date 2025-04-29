@@ -76,6 +76,17 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
+@bot.event
+async def on_guild_channel_create(channel):
+    # Check if it's a ticket channel under the "tickets" category
+    if isinstance(channel, discord.TextChannel):
+        if channel.category and channel.category.name.lower() == "tickets":
+            try:
+                await channel.send("Hi! Please tell us your problem here. Tripex will reply if he isn't sleeping")
+                print(f"📩 Sent ticket greeting in {channel.name}")
+            except Exception as e:
+                print(f"❌ Failed to send ticket greeting: {e}")
+
 # === Start ===
 keep_alive()
 print("🟡 Starting bot...")
