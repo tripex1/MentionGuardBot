@@ -30,11 +30,13 @@ intents.guilds = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-tree = bot.tree
+tree = bot.tree  # Use the built-in tree
 
 BLOCKED_NAMES = ["tripex", "ma1eja", "owner"]  # case-insensitive
 TARGET_ROLE_NAME = "Members"
 TIMEOUT_SECONDS = 1800  # 30 minutes
+TICKET_CATEGORY_ID = 1337877093735731291  # Your actual category ID
+GUILD_ID = 688729972109475843  # Replace with your actual guild (server) ID
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 if DISCORD_BOT_TOKEN is None:
@@ -42,8 +44,9 @@ if DISCORD_BOT_TOKEN is None:
 
 @bot.event
 async def on_ready():
-    await tree.sync()
-    print(f"✅ Bot is ready. Logged in as {bot.user}")
+    await tree.sync(guild=discord.Object(id=GUILD_ID))
+    print("✅ Slash commands synced to the test guild.")
+    print(f"✅ Bot is ready. Logged in as {bot.user} ({bot.user.id})")
 
 @bot.event
 async def on_message(message):
@@ -52,12 +55,10 @@ async def on_message(message):
 
     triggered = False
 
-    # Check user mentions
     for mention in message.mentions:
         if mention.name.lower() in BLOCKED_NAMES:
             triggered = True
 
-    # Check role mentions
     for role in message.role_mentions:
         if role.name.lower() in BLOCKED_NAMES:
             triggered = True
@@ -80,8 +81,6 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-TICKET_CATEGORY_ID = 1337877093735731291  # Your actual category ID
-
 @bot.event
 async def on_guild_channel_create(channel):
     if isinstance(channel, discord.TextChannel):
@@ -93,7 +92,8 @@ async def on_guild_channel_create(channel):
             except Exception as e:
                 print(f"❌ Failed to send ticket greeting: {e}")
 
-@tree.command(name="clean", description="Delete messages by user ID")
+# === Slash Command: /clean ===
+@tree.command(name="clean", description="Delete messages by user ID", guild=discord.Object(id=GUILD_ID))
 @app_commands.describe(user_id="User ID to delete messages from", amount="Number of messages to scan")
 async def clean(interaction: discord.Interaction, user_id: str, amount: int = 100):
     if not interaction.channel.permissions_for(interaction.user).manage_messages:
@@ -102,7 +102,8 @@ async def clean(interaction: discord.Interaction, user_id: str, amount: int = 10
 
     try:
         deleted = await interaction.channel.purge(limit=amount, check=lambda m: str(m.author.id) == user_id)
-        await interaction.response.send_message(f"🧹 Deleted {len(deleted)} messages from user ID {user_id}.", ephemeral=True)
+        await interaction.response.send_message(
+            f"🧹 Deleted {len(deleted)} messages from user ID {user_id}.", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"❌ Failed to delete messages: {e}", ephemeral=True)
 
