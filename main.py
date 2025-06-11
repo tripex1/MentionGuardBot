@@ -1,8 +1,9 @@
 from flask import Flask
-import asyncio  # Add this at the top with your imports
+import asyncio
 import os
 import discord
 from discord.ext import commands
+from discord import app_commands
 from datetime import timedelta
 from threading import Thread
 
@@ -14,7 +15,7 @@ def home():
     return "MentionGuardBot is running!"
 
 def start_server():
-    port = int(os.environ.get("PORT", 3000))  # Railway provides PORT
+    port = int(os.environ.get("PORT", 3000))
     print(f"🚀 Starting Flask server on port {port}")
     app.run(host='0.0.0.0', port=port)
 
@@ -29,10 +30,11 @@ intents.guilds = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+tree = bot.tree
 
-BLOCKED_NAMES = ["tripex", "ma1eja", "owner"]  # case-insensitive
+BLOCKED_NAMES = ["tripex", "ma1eja", "owner"]
 TARGET_ROLE_NAME = "Members"
-TIMEOUT_SECONDS = 1800  # 30 minutes
+TIMEOUT_SECONDS = 1800
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 if DISCORD_BOT_TOKEN is None:
@@ -40,6 +42,7 @@ if DISCORD_BOT_TOKEN is None:
 
 @bot.event
 async def on_ready():
+    await tree.sync()
     print(f"✅ Bot is ready. Logged in as {bot.user}")
 
 @bot.event
@@ -48,13 +51,10 @@ async def on_message(message):
         return
 
     triggered = False
-
-    # Check user mentions
     for mention in message.mentions:
         if mention.name.lower() in BLOCKED_NAMES:
             triggered = True
 
-    # Check role mentions
     for role in message.role_mentions:
         if role.name.lower() in BLOCKED_NAMES:
             triggered = True
@@ -77,7 +77,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-TICKET_CATEGORY_ID = 1337877093735731291  # Your actual category ID
+TICKET_CATEGORY_ID = 1337877093735731291
 
 @bot.event
 async def on_guild_channel_create(channel):
@@ -90,32 +90,29 @@ async def on_guild_channel_create(channel):
             except Exception as e:
                 print(f"❌ Failed to send ticket greeting: {e}")
 
-@bot.command(name='clean')
-@commands.has_permissions(manage_messages=True)
-async def clean(ctx, amount: int, user_identifier: str = None):
-    target_id = None
+# === /clean Slash Command ===
+@tree.command(name="clean", description="Delete recent messages, optionally from a specific user or user ID.")
+@app_commands.describe(
+    amount="How many messages to delete (max 100)",
+    user="User to delete messages from (optional)",
+    user_id="User ID to delete messages from (optional, for users who left)"
+)
+async def clean(interaction: discord.Interaction, amount: int, user: discord.User = None, user_id: str = None):
+    await interaction.response.defer(thinking=True, ephemeral=True)
 
-    if user_identifier:
-        if user_identifier.startswith("<@") and user_identifier.endswith(">"):
-            user_identifier = user_identifier.replace("<@!", "").replace("<@", "").replace(">", "")
-        try:
-            target_id = int(user_identifier)
-        except ValueError:
-            await ctx.send("❌ Invalid user ID or mention.", delete_after=5)
-            return
+    if amount < 1 or amount > 100:
+        await interaction.followup.send("❌ Amount must be between 1 and 100.")
+        return
 
-    def check(m):
-        return (target_id is None or m.author.id == target_id)
+    def check(msg):
+        if user:
+            return msg.author.id == user.id
+        if user_id:
+            return str(msg.author.id) == user_id
+        return True
 
-    deleted = await ctx.channel.purge(limit=amount + 1, check=check)
-    await ctx.send(f"🧹 Deleted {len(deleted) - 1} messages", delete_after=5)
-
-@clean.error
-async def clean_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("❌ You don't have permission to use this command.", delete_after=5)
-    elif isinstance(error, commands.BadArgument):
-        await ctx.send("❌ Invalid arguments. Usage: !clean <amount> [@mention or user ID]", delete_after=5)
+    deleted = await interaction.channel.purge(limit=amount, check=check)
+    await interaction.followup.send(f"✅ Deleted {len(deleted)} messages.", ephemeral=True)
 
 # === Start ===
 keep_alive()
