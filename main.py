@@ -90,8 +90,32 @@ async def on_guild_channel_create(channel):
             except Exception as e:
                 print(f"❌ Failed to send ticket greeting: {e}")
 
+@bot.command(name='clean')
+@commands.has_permissions(manage_messages=True)
+async def clean(ctx, amount: int, user_identifier: str = None):
+    target_id = None
 
+    if user_identifier:
+        if user_identifier.startswith("<@") and user_identifier.endswith(">"):
+            user_identifier = user_identifier.replace("<@!", "").replace("<@", "").replace(">", "")
+        try:
+            target_id = int(user_identifier)
+        except ValueError:
+            await ctx.send("❌ Invalid user ID or mention.", delete_after=5)
+            return
 
+    def check(m):
+        return (target_id is None or m.author.id == target_id)
+
+    deleted = await ctx.channel.purge(limit=amount + 1, check=check)
+    await ctx.send(f"🧹 Deleted {len(deleted) - 1} messages", delete_after=5)
+
+@clean.error
+async def clean_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ You don't have permission to use this command.", delete_after=5)
+    elif isinstance(error, commands.BadArgument):
+        await ctx.send("❌ Invalid arguments. Usage: !clean <amount> [@mention or user ID]", delete_after=5)
 
 # === Start ===
 keep_alive()
