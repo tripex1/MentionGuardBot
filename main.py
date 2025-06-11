@@ -128,13 +128,17 @@ async def clean(
     except Exception as e:
         await interaction.response.send_message(f"❌ Failed to delete messages: {e}", ephemeral=True)
 
-# === Cleanup Command (Optional) ===
-@bot.command()
-async def clearslash(ctx):
-    """Remove old global slash commands."""
-    await bot.tree.clear_commands(guild=None)
+
+@tree.command(name="clearslash", description="Clear global slash commands", guild=discord.Object(id=688729972109475843))
+async def clearslash(interaction: discord.Interaction):
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("❌ You must be an admin to use this.", ephemeral=True)
+        return
+
+    await bot.tree.clear_commands(guild=None)  # Clear global commands
     await bot.tree.sync()
-    await ctx.send("🧹 Cleared global slash commands.")
+    await interaction.response.send_message("🧹 Global slash commands cleared!", ephemeral=True)
+
 
 # === Start ===
 keep_alive()
