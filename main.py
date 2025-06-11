@@ -30,7 +30,7 @@ intents.guilds = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-tree = app_commands.CommandTree(bot)
+tree = bot.tree
 
 BLOCKED_NAMES = ["tripex", "ma1eja", "owner"]  # case-insensitive
 TARGET_ROLE_NAME = "Members"
