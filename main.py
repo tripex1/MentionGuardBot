@@ -36,7 +36,7 @@ BLOCKED_NAMES = ["tripex", "ma1eja", "owner"]
 TARGET_ROLE_NAME = "Members"
 TIMEOUT_SECONDS = 1800
 TICKET_CATEGORY_ID = 1337877093735731291
-GUILD_ID = 688729972109475843  # Your actual server ID
+GUILD_ID = 688729972109475843  # Your server ID
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 if DISCORD_BOT_TOKEN is None:
@@ -138,13 +138,13 @@ async def clearslash(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)
 
     try:
-        await tree.clear_commands(guild=None)  # Clears global commands
+        tree.clear_commands(guild=None)  # ✅ FIX: no 'await'
         await tree.sync()
         await interaction.followup.send("🧹 Global slash commands cleared!")
     except Exception as e:
         await interaction.followup.send(f"❌ Failed to clear commands: `{e}`")
 
-# === Start ===
+# === Start Everything ===
 keep_alive()
 print("🟡 Starting bot...")
 bot.run(DISCORD_BOT_TOKEN)
